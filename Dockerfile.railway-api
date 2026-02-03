@@ -26,5 +26,5 @@ WORKDIR /app/apps/tracker-api
 # Expose port
 EXPOSE 3000
 
-# Start with tsx (runs TypeScript directly without compilation)
-CMD ["npx", "tsx", "src/index.ts"]
+# Run database migrations and then start the server
+CMD npx drizzle-kit push && npx tsx src/index.ts
