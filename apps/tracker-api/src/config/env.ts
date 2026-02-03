@@ -28,12 +28,13 @@ const envSchema = z.object({
   APP_URL: z.string().url().optional(),
 
   // Email Configuration (Optional - for password reset)
-  SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.coerce.number().optional().default(587),
-  SMTP_SECURE: z.coerce.boolean().optional().default(false),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
-  SMTP_FROM: z.string().optional().default('noreply@casha.app'),
+  // Using EMAIL_ prefix as workaround for Railway variable issues
+  EMAIL_HOST: z.string().optional(),
+  EMAIL_PORT: z.coerce.number().optional().default(587),
+  EMAIL_SECURE: z.coerce.boolean().optional().default(false),
+  EMAIL_USER: z.string().optional(),
+  EMAIL_PASS: z.string().optional(),
+  EMAIL_FROM: z.string().optional().default('noreply@casha.app'),
 });
 
 export type Env = z.infer<typeof envSchema>;

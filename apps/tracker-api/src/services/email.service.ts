@@ -9,44 +9,39 @@ import { env } from '../config/env.js';
 // Create transporter based on environment configuration
 function createTransporter() {
   // Debug: Log raw process.env values
-  console.log('Raw process.env SMTP values:', {
-    SMTP_HOST: process.env.SMTP_HOST,
-    SMTP_USER: process.env.SMTP_USER,
-    SMTP_PASS: process.env.SMTP_PASS ? '(set)' : '(not set)',
+  console.log('Raw process.env EMAIL values:', {
+    EMAIL_HOST: process.env.EMAIL_HOST,
+    EMAIL_USER: process.env.EMAIL_USER,
+    EMAIL_PASS: process.env.EMAIL_PASS ? '(set)' : '(not set)',
   });
 
-  // Debug: Log parsed env values
-  console.log('Parsed env SMTP values:', {
-    SMTP_HOST: env.SMTP_HOST || '(not set)',
-    SMTP_USER: env.SMTP_USER ? '(set)' : '(not set)',
-    SMTP_PASS: env.SMTP_PASS ? '(set)' : '(not set)',
-  });
-
-  // If no SMTP host configured, return null (emails won't be sent)
-  if (!env.SMTP_HOST) {
+  // If no EMAIL host configured, return null (emails won't be sent)
+  if (!env.EMAIL_HOST) {
     console.warn('SMTP not configured - emails will be logged to console instead');
     return null;
   }
 
+  console.log('SMTP configured successfully with host:', env.EMAIL_HOST);
+
   // For Gmail, use the built-in service which handles TLS correctly
-  if (env.SMTP_HOST === 'smtp.gmail.com') {
+  if (env.EMAIL_HOST === 'smtp.gmail.com') {
     return nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: env.SMTP_USER,
-        pass: env.SMTP_PASS,
+        user: env.EMAIL_USER,
+        pass: env.EMAIL_PASS,
       },
     });
   }
 
   // For other providers, use standard configuration
   return nodemailer.createTransport({
-    host: env.SMTP_HOST,
-    port: env.SMTP_PORT,
-    secure: env.SMTP_SECURE,
+    host: env.EMAIL_HOST,
+    port: env.EMAIL_PORT,
+    secure: env.EMAIL_SECURE,
     auth: {
-      user: env.SMTP_USER,
-      pass: env.SMTP_PASS,
+      user: env.EMAIL_USER,
+      pass: env.EMAIL_PASS,
     },
   });
 }
@@ -75,7 +70,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
 
   try {
     await transporter.sendMail({
-      from: env.SMTP_FROM,
+      from: env.EMAIL_FROM,
       to,
       subject,
       html,
