@@ -8,8 +8,15 @@ import { env } from '../config/env.js';
 
 // Create transporter based on environment configuration
 function createTransporter() {
-  // Debug: Log SMTP configuration status
-  console.log('SMTP Config Check:', {
+  // Debug: Log raw process.env values
+  console.log('Raw process.env SMTP values:', {
+    SMTP_HOST: process.env.SMTP_HOST,
+    SMTP_USER: process.env.SMTP_USER,
+    SMTP_PASS: process.env.SMTP_PASS ? '(set)' : '(not set)',
+  });
+
+  // Debug: Log parsed env values
+  console.log('Parsed env SMTP values:', {
     SMTP_HOST: env.SMTP_HOST || '(not set)',
     SMTP_USER: env.SMTP_USER ? '(set)' : '(not set)',
     SMTP_PASS: env.SMTP_PASS ? '(set)' : '(not set)',
