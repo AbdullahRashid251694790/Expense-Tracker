@@ -8,6 +8,13 @@ import { env } from '../config/env.js';
 
 // Create transporter based on environment configuration
 function createTransporter() {
+  // Debug: Log SMTP configuration status
+  console.log('SMTP Config Check:', {
+    SMTP_HOST: env.SMTP_HOST || '(not set)',
+    SMTP_USER: env.SMTP_USER ? '(set)' : '(not set)',
+    SMTP_PASS: env.SMTP_PASS ? '(set)' : '(not set)',
+  });
+
   // If no SMTP host configured, return null (emails won't be sent)
   if (!env.SMTP_HOST) {
     console.warn('SMTP not configured - emails will be logged to console instead');
