@@ -8,20 +8,9 @@ import { env } from '../config/env.js';
 
 // Create transporter based on environment configuration
 function createTransporter() {
-  // Debug: Log raw process.env values
-  console.log('Raw process.env EMAIL values:', {
-    EMAIL_HOST: process.env.EMAIL_HOST,
-    EMAIL_USER: process.env.EMAIL_USER,
-    EMAIL_PASS: process.env.EMAIL_PASS ? '(set)' : '(not set)',
-  });
-
-  // If no EMAIL host configured, return null (emails won't be sent)
   if (!env.EMAIL_HOST) {
-    console.warn('SMTP not configured - emails will be logged to console instead');
     return null;
   }
-
-  console.log('SMTP configured successfully with host:', env.EMAIL_HOST);
 
   // For Gmail, use the built-in service which handles TLS correctly
   if (env.EMAIL_HOST === 'smtp.gmail.com') {
@@ -58,14 +47,8 @@ interface SendEmailOptions {
 export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
   const { to, subject, html, text } = options;
 
-  // If no transporter configured, log to console (development mode)
   if (!transporter) {
-    console.log('\n========== EMAIL (Not Sent - SMTP not configured) ==========');
-    console.log(`To: ${to}`);
-    console.log(`Subject: ${subject}`);
-    console.log(`Body: ${text || html}`);
-    console.log('=============================================================\n');
-    return true;
+    return false;
   }
 
   try {
