@@ -1,0 +1,64 @@
+# Stage 1: Build
+FROM node:20-alpine AS builder
+
+# Enable corepack for pnpm
+RUN corepack enable && corepack prepare pnpm@8.15.0 --activate
+
+WORKDIR /app
+
+# Build arguments for Vite environment variables
+ARG VITE_API_URL
+
+# Set environment variables for build
+ENV VITE_API_URL=$VITE_API_URL
+
+# Copy workspace configuration files
+COPY pnpm-workspace.yaml ./
+COPY pnpm-lock.yaml ./
+COPY package.json ./
+COPY tsconfig.base.json ./
+
+# Copy shared package
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/shared/tsconfig.json ./packages/shared/
+COPY packages/shared/src ./packages/shared/src
+
+# Copy frontend package
+COPY apps/frontend/package.json ./apps/frontend/
+COPY apps/frontend/tsconfig.json ./apps/frontend/
+COPY apps/frontend/tsconfig.node.json ./apps/frontend/
+COPY apps/frontend/vite.config.ts ./apps/frontend/
+COPY apps/frontend/tailwind.config.ts ./apps/frontend/
+COPY apps/frontend/postcss.config.js ./apps/frontend/
+COPY apps/frontend/index.html ./apps/frontend/
+
+# Copy source and public files
+COPY apps/frontend/src ./apps/frontend/src
+COPY apps/frontend/public ./apps/frontend/public
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Build shared package first
+RUN pnpm --filter @casha/shared build
+
+# Build frontend
+RUN pnpm --filter frontend build
+
+# Stage 2: Production with nginx
+FROM nginx:alpine AS production
+
+# Copy custom nginx config template
+COPY nginx.railway.conf /etc/nginx/templates/default.conf.template
+
+# Copy built assets from builder stage
+COPY --from=builder /app/apps/frontend/dist /usr/share/nginx/html
+
+# Railway uses PORT env variable
+ENV PORT=80
+
+# Expose port (Railway will override this)
+EXPOSE $PORT
+
+# Start nginx (nginx docker image handles envsubst for templates)
+CMD ["nginx", "-g", "daemon off;"]
