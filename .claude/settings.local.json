@@ -62,7 +62,10 @@
       "Bash(cmd //c \"dir /s /b \"\"F:\\\\cash1\\\\Expense-tracker-main\\\\*.md\"\" 2>nul\")",
       "Bash(git init:*)",
       "Bash(git remote add:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)"
     ]
   }
 }
