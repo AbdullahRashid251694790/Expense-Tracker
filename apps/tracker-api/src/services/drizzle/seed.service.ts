@@ -123,7 +123,7 @@ export async function seedDemoData(userId: string): Promise<SeedResult> {
     description: exp.description,
     date: getDate(exp.daysAgo),
     isRecurring: exp.isRecurring || false,
-    recurringInterval: exp.recurringInterval || null,
+    recurringInterval: (exp.recurringInterval || null) as 'weekly' | 'monthly' | null,
     isBill: exp.isBill || false,
     dueDay: exp.dueDay || null,
   }));

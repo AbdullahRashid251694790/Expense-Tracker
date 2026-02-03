@@ -61,13 +61,13 @@ function toExpenseWithCategoryResponse(
     lastReviewedAt: expense.lastReviewedAt?.toISOString(),
     createdAt: expense.createdAt.toISOString(),
     category: category
-      ? {
+      ? ({
           id: category.id,
           name: category.name,
           color: category.color,
           icon: category.icon,
           type: category.type,
-        }
+        } as Pick<Category, 'id' | 'name' | 'color' | 'icon' | 'type'>)
       : undefined,
   };
 }

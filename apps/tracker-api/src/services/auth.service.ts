@@ -5,7 +5,7 @@
 
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { eq, and, gt } from 'drizzle-orm';
+import { eq, and, lt } from 'drizzle-orm';
 import { db, schema } from '../db';
 import { env } from '../config/env';
 import { DEFAULT_CATEGORIES } from '@casha/shared';
@@ -44,13 +44,13 @@ export function generateTokens(userId: string, email: string): TokenPair {
   const accessToken = jwt.sign(
     { userId, email },
     env.JWT_SECRET,
-    { expiresIn: env.JWT_EXPIRES_IN }
+    { expiresIn: env.JWT_EXPIRES_IN as string }
   );
 
   const refreshToken = jwt.sign(
     { userId, email, type: 'refresh' },
     env.JWT_REFRESH_SECRET,
-    { expiresIn: env.JWT_REFRESH_EXPIRES_IN }
+    { expiresIn: env.JWT_REFRESH_EXPIRES_IN as string }
   );
 
   return { accessToken, refreshToken };
@@ -304,7 +304,7 @@ export async function changePassword(
 export async function cleanupExpiredTokens(): Promise<number> {
   const result = await db
     .delete(schema.refreshTokens)
-    .where(gt(new Date(), schema.refreshTokens.expiresAt))
+    .where(lt(schema.refreshTokens.expiresAt, new Date()))
     .returning();
 
   return result.length;
