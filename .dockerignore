@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment files (use docker-*-env templates instead)
+.env
+.env.local
+.env.*.local
+apps/frontend/.env
+apps/tracker-api/.env
+
+# Documentation
+*.md
+!README.md
+
+# Mobile builds
+apps/frontend/android/
+
+# Test & coverage
+coverage/
+.nyc_output/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Claude plans
+.claude/

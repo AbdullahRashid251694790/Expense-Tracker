@@ -1,0 +1,29 @@
+{
+  "name": "casha",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Casha - Personal expense tracker with AI-powered insights",
+  "scripts": {
+    "dev": "pnpm --parallel -r run dev",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:api": "pnpm --filter tracker-api dev",
+    "build": "pnpm -r run build",
+    "build:frontend": "pnpm --filter frontend build",
+    "build:api": "pnpm --filter tracker-api build",
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "db:generate": "pnpm --filter tracker-api db:generate",
+    "db:migrate": "pnpm --filter tracker-api db:migrate",
+    "db:studio": "pnpm --filter tracker-api db:studio",
+    "clean": "pnpm -r run clean && rimraf node_modules"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

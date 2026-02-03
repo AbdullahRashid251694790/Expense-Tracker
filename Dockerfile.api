@@ -1,0 +1,75 @@
+# Stage 1: Build
+FROM node:20-alpine AS builder
+
+# Enable corepack for pnpm
+RUN corepack enable && corepack prepare pnpm@8.15.0 --activate
+
+WORKDIR /app
+
+# Copy workspace configuration files
+COPY pnpm-workspace.yaml ./
+COPY pnpm-lock.yaml ./
+COPY package.json ./
+COPY tsconfig.base.json ./
+
+# Copy shared package
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/shared/tsconfig.json ./packages/shared/
+COPY packages/shared/src ./packages/shared/src
+
+# Copy API package
+COPY apps/tracker-api/package.json ./apps/tracker-api/
+COPY apps/tracker-api/tsconfig.json ./apps/tracker-api/
+COPY apps/tracker-api/src ./apps/tracker-api/src
+
+# Install all dependencies
+RUN pnpm install --frozen-lockfile
+
+# Build shared package first
+RUN pnpm --filter @casha/shared build
+
+# Build API
+RUN pnpm --filter tracker-api build
+
+# Stage 2: Production
+FROM node:20-alpine AS production
+
+# Enable corepack for pnpm
+RUN corepack enable && corepack prepare pnpm@8.15.0 --activate
+
+WORKDIR /app
+
+# Copy workspace configuration for production install
+COPY pnpm-workspace.yaml ./
+COPY pnpm-lock.yaml ./
+COPY package.json ./
+
+# Copy shared package (built)
+COPY packages/shared/package.json ./packages/shared/
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+
+# Copy API package.json for production dependencies
+COPY apps/tracker-api/package.json ./apps/tracker-api/
+
+# Install production dependencies only
+RUN pnpm install --frozen-lockfile --prod
+
+# Copy built API
+COPY --from=builder /app/apps/tracker-api/dist ./apps/tracker-api/dist
+
+# Set working directory to API
+WORKDIR /app/apps/tracker-api
+
+# Environment variables (set at runtime via --env-file)
+ENV NODE_ENV=production
+ENV API_PORT=3001
+
+# Expose port
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+
+# Start the API
+CMD ["node", "dist/index.js"]
