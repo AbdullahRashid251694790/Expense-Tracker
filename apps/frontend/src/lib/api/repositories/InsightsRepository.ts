@@ -60,13 +60,6 @@ interface AIAdviceRequestWithData {
 
 class InsightsRepositoryClass extends BaseRepository {
   /**
-   * Get auth token from localStorage
-   */
-  private getAuthToken(): string | null {
-    return localStorage.getItem('accessToken');
-  }
-
-  /**
    * Get spending summary (with caching)
    */
   async getSpendingSummary(period: 'week' | 'month' = 'month'): Promise<SpendingSummary> {

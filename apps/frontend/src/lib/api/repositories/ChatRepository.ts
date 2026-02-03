@@ -42,13 +42,6 @@ interface SendMessageRequest {
 
 class ChatRepositoryClass extends BaseRepository {
   /**
-   * Get auth token from localStorage
-   */
-  private getAuthToken(): string | null {
-    return localStorage.getItem('accessToken');
-  }
-
-  /**
    * Get all conversations (with caching)
    */
   async getConversations(): Promise<ChatConversation[]> {

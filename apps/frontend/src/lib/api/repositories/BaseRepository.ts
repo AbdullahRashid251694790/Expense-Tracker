@@ -20,7 +20,7 @@ export class BaseRepository {
   /**
    * Get auth token from localStorage
    */
-  private getAuthToken(): string | null {
+  protected getAuthToken(): string | null {
     return localStorage.getItem('accessToken');
   }
 
