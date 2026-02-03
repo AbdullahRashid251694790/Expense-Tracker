@@ -2,10 +2,7 @@
 nixPkgs = ["nodejs_22"]
 
 [phases.install]
-cmds = ["npm install -g pnpm@8.15.0", "cd ../.. && pnpm install --frozen-lockfile=false"]
-
-[phases.build]
-cmds = ["cd ../.. && pnpm build"]
+cmds = ["npm install -g pnpm@8.15.0 && cd ../.. && pnpm install --frozen-lockfile=false && pnpm build"]
 
 [start]
 cmd = "node dist/index.js"
