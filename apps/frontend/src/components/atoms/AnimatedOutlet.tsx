@@ -19,5 +19,5 @@ export function AnimatedOutlet({ context }: AnimatedOutletProps) {
     <AnimatePresence mode="wait">
       {element && cloneElement(element, { key: location.pathname })}
     </AnimatePresence>
-  );
+  ); 
 }

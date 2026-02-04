@@ -138,8 +138,37 @@ export function OnboardingPage() {
     setIsSkipping(false);
   };
 
-  // Go to next step
-  const nextStep = () => {
+  // Go to next step (with auto-save for income step)
+  const nextStep = async () => {
+    // If on income step and form has valid data, save it first
+    if (STEPS[currentStep].id === 'income') {
+      const formValues = incomeForm.getValues();
+      const hasData = formValues.name.trim() && formValues.amount.trim();
+
+      if (hasData) {
+        // Validate and save the filled income data
+        const isValid = await incomeForm.trigger();
+        if (isValid) {
+          try {
+            await createIncomeSource({
+              name: formValues.name,
+              amount: parseFloat(formValues.amount),
+              frequency: formValues.frequency,
+            });
+            incomeForm.reset();
+            toast.success('Income source added!');
+          } catch {
+            toast.error('Failed to add income source');
+            return; // Don't proceed if save failed
+          }
+        } else {
+          // Form has data but it's invalid - don't proceed
+          toast.error('Please fix the income form or clear it to continue');
+          return;
+        }
+      }
+    }
+
     if (currentStep < STEPS.length - 1) {
       setCurrentStep((prev) => prev + 1);
     }
