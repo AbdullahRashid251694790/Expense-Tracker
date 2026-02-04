@@ -196,7 +196,7 @@ export function DashboardPage() {
       {/* Should I Buy? - Quick Action */}
       <button
         onClick={() => setIsAskBeforeBuyOpen(true)}
-        className="w-full p-4 bg-gradient-to-r from-casha-primary to-casha-primary/80 rounded-bento text-white hover:opacity-90 transition-opacity"
+        className="w-full p-4 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-bento text-white hover:opacity-90 transition-opacity"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
