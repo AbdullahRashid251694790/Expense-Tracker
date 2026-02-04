@@ -49,7 +49,7 @@ export function DashboardPage() {
 
   // Fetch real data using hooks
   const { summary, trends, isLoading: isLoadingStats, error: statsError, refetch: refetchStats } = useDashboardData();
-  const { categoryBudgets, isLoading: isLoadingBudgets } = useBudgets();
+  const { categoryBudgets, overallBudget, isLoading: isLoadingBudgets } = useBudgets();
   const { expenses: recentExpenses, isLoading: isLoadingExpenses } = useRecentExpenses(4);
   const {
     recommendations,
@@ -237,7 +237,7 @@ export function DashboardPage() {
                 </div>
               ))}
             </div>
-          ) : categoryBudgets.length === 0 ? (
+          ) : !overallBudget && categoryBudgets.length === 0 ? (
             <div className="py-8 text-center text-text-muted">
               <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p>No budgets set yet</p>
@@ -247,10 +247,22 @@ export function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {categoryBudgets.slice(0, 4).map((budget) => (
+              {/* Overall Budget */}
+              {overallBudget && (
+                <BudgetProgress
+                  key={overallBudget.id}
+                  label="Monthly Budget"
+                  spent={overallBudget.spent}
+                  budget={overallBudget.amount}
+                  showAmounts
+                  size="md"
+                />
+              )}
+              {/* Category Budgets */}
+              {categoryBudgets.slice(0, overallBudget ? 3 : 4).map((budget) => (
                 <BudgetProgress
                   key={budget.id}
-                  label={budget.category?.name || 'Overall'}
+                  label={budget.category?.name || 'Budget'}
                   spent={budget.spent}
                   budget={budget.amount}
                   showAmounts
