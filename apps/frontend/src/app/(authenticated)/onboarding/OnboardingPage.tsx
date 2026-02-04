@@ -138,7 +138,7 @@ export function OnboardingPage() {
     setIsSkipping(false);
   };
 
-  // Go to next step (with auto-save for income step)
+  // Go to next step (with auto-save for income and budget steps)
   const nextStep = async () => {
     // If on income step and form has valid data, save it first
     if (STEPS[currentStep].id === 'income') {
@@ -164,6 +164,34 @@ export function OnboardingPage() {
         } else {
           // Form has data but it's invalid - don't proceed
           toast.error('Please fix the income form or clear it to continue');
+          return;
+        }
+      }
+    }
+
+    // If on budget step and form has data but budget not yet created, save it first
+    if (STEPS[currentStep].id === 'budget' && !overallBudget) {
+      const formValues = budgetForm.getValues();
+      const hasData = formValues.amount.trim();
+
+      if (hasData) {
+        // Validate and save the filled budget data
+        const isValid = await budgetForm.trigger();
+        if (isValid) {
+          try {
+            await createBudget({
+              categoryId: null,
+              amount: parseFloat(formValues.amount),
+              period: formValues.period,
+            });
+            toast.success('Budget created!');
+          } catch {
+            toast.error('Failed to create budget');
+            return; // Don't proceed if save failed
+          }
+        } else {
+          // Form has data but it's invalid - don't proceed
+          toast.error('Please fix the budget form or clear it to continue');
           return;
         }
       }
