@@ -148,21 +148,37 @@ export function OnboardingPage() {
       if (hasData) {
         // Validate and save the filled income data
         const isValid = await incomeForm.trigger();
+        console.log('[Onboarding] Income form valid:', isValid, 'Values:', formValues);
         if (isValid) {
           try {
-            await createIncomeSource({
-              name: formValues.name,
+            const incomeData = {
+              name: formValues.name.trim(),
               amount: parseFloat(formValues.amount),
               frequency: formValues.frequency,
-            });
+            };
+            console.log('[Onboarding] Creating income with:', incomeData);
+
+            // Extra validation
+            if (!incomeData.name) {
+              toast.error('Please enter a name for the income source');
+              return;
+            }
+            if (isNaN(incomeData.amount) || incomeData.amount <= 0) {
+              toast.error('Please enter a valid amount');
+              return;
+            }
+
+            await createIncomeSource(incomeData);
             incomeForm.reset();
             toast.success('Income source added!');
-          } catch {
-            toast.error('Failed to add income source');
+          } catch (error) {
+            console.error('[Onboarding] Failed to create income:', error);
+            toast.error(`Failed to add income: ${error instanceof Error ? error.message : 'Unknown error'}`);
             return; // Don't proceed if save failed
           }
         } else {
           // Form has data but it's invalid - don't proceed
+          console.log('[Onboarding] Income form invalid, errors:', incomeForm.formState.errors);
           toast.error('Please fix the income form or clear it to continue');
           return;
         }
@@ -212,15 +228,29 @@ export function OnboardingPage() {
   // Add income source
   const handleAddIncome = async (data: IncomeFormData) => {
     try {
-      await createIncomeSource({
-        name: data.name,
+      const incomeData = {
+        name: data.name.trim(),
         amount: parseFloat(data.amount),
         frequency: data.frequency,
-      });
+      };
+      console.log('[Onboarding] handleAddIncome called with:', incomeData);
+
+      // Validate data before sending
+      if (!incomeData.name) {
+        toast.error('Please enter a name for the income source');
+        return;
+      }
+      if (isNaN(incomeData.amount) || incomeData.amount <= 0) {
+        toast.error('Please enter a valid amount');
+        return;
+      }
+
+      await createIncomeSource(incomeData);
       incomeForm.reset();
       toast.success('Income source added!');
-    } catch {
-      toast.error('Failed to add income source');
+    } catch (error) {
+      console.error('[Onboarding] handleAddIncome error:', error);
+      toast.error(`Failed to add income: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
