@@ -9,6 +9,7 @@
 
 import { getApiUrl, ApiError } from '../client';
 import { cacheManager } from '@/lib/cache';
+import { Storage } from '@/lib/storage/storage';
 
 export class BaseRepository {
   protected baseURL: string;
@@ -18,10 +19,10 @@ export class BaseRepository {
   }
 
   /**
-   * Get auth token from localStorage
+   * Get auth token from storage (sync for immediate access)
    */
   protected getAuthToken(): string | null {
-    return localStorage.getItem('accessToken');
+    return Storage.getItemSync('accessToken');
   }
 
   /**
@@ -52,7 +53,7 @@ export class BaseRepository {
 
       // Handle 401 Unauthorized
       if (response.status === 401) {
-        localStorage.removeItem('accessToken');
+        Storage.removeItemSync('accessToken');
         window.dispatchEvent(new Event('auth:logout'));
         throw new ApiError('Session expired', 401, 'Please log in again');
       }

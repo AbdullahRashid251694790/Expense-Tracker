@@ -1,6 +1,7 @@
 /**
  * Theme Context
  * Global theme state management with system preference detection
+ * Uses cross-platform storage for Android compatibility
  */
 
 import {
@@ -11,6 +12,7 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
+import { Storage } from '@/lib/storage/storage';
 
 export type Theme = 'light' | 'dark' | 'system';
 type EffectiveTheme = 'light' | 'dark';
@@ -23,7 +25,7 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const THEME_STORAGE_KEY = 'casha:theme';
+const THEME_STORAGE_KEY = 'theme';
 
 function getSystemTheme(): EffectiveTheme {
   if (typeof window === 'undefined') return 'light';
@@ -34,7 +36,7 @@ function getSystemTheme(): EffectiveTheme {
 
 function getStoredTheme(): Theme {
   if (typeof window === 'undefined') return 'system';
-  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  const stored = Storage.getItemSync(THEME_STORAGE_KEY);
   if (stored === 'light' || stored === 'dark' || stored === 'system') {
     return stored;
   }
@@ -83,10 +85,10 @@ export function ThemeProvider({
     }
   }, [effectiveTheme]);
 
-  // Set theme and persist to localStorage
+  // Set theme and persist to storage
   const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    Storage.setItemSync(THEME_STORAGE_KEY, newTheme);
   }, []);
 
   return (

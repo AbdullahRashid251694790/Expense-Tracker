@@ -1,7 +1,10 @@
 /**
  * SyncManager
  * Manages offline mutation queue for syncing when back online
+ * Uses cross-platform storage for Android compatibility
  */
+
+import { Storage } from '@/lib/storage/storage';
 
 export interface QueuedMutation {
   id: string;
@@ -35,7 +38,7 @@ export class SyncManager {
    * Get all queued mutations
    */
   getQueue(): QueuedMutation[] {
-    const stored = localStorage.getItem(this.queueKey);
+    const stored = Storage.getItemSync(this.queueKey);
     return stored ? JSON.parse(stored) : [];
   }
 
@@ -100,11 +103,11 @@ export class SyncManager {
    * Clear all pending mutations
    */
   clearQueue(): void {
-    localStorage.removeItem(this.queueKey);
+    Storage.removeItemSync(this.queueKey);
   }
 
   private saveQueue(queue: QueuedMutation[]): void {
-    localStorage.setItem(this.queueKey, JSON.stringify(queue));
+    Storage.setItemSync(this.queueKey, JSON.stringify(queue));
   }
 
   private generateId(): string {

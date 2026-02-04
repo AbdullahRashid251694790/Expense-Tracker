@@ -11,6 +11,7 @@ export * from './ProgressBar';
 export * from './Spinner';
 export * from './Avatar';
 export * from './Modal';
+export * from './ConfirmDialog';
 export * from './Select';
 export * from './charts';
 export * from './PageTransition';

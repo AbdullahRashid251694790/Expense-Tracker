@@ -1,6 +1,7 @@
 /**
  * Auth Context
  * Global authentication state management with API-based auth
+ * Uses cross-platform storage for Android compatibility
  */
 
 import {
@@ -11,7 +12,9 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getApiUrl, ApiError } from '@/lib/api/client';
+import { Storage } from '@/lib/storage/storage';
 import type { User, LoginRequest, CreateUserRequest, AuthState } from '@casha/shared';
 
 interface AuthContextType extends AuthState {
@@ -33,12 +36,13 @@ const API_URL = getApiUrl();
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   const isAuthenticated = !!user;
 
   // Refresh access token using refresh token
   const refreshAccessToken = useCallback(async (): Promise<boolean> => {
-    const refreshToken = localStorage.getItem('refreshToken');
+    const refreshToken = await Storage.getItem('refreshToken');
     if (!refreshToken) return false;
 
     try {
@@ -50,8 +54,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem('accessToken', data.accessToken);
-        localStorage.setItem('refreshToken', data.refreshToken);
+        await Storage.setItem('accessToken', data.accessToken);
+        await Storage.setItem('refreshToken', data.refreshToken);
         return true;
       }
     } catch (error) {
@@ -80,7 +84,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Initialize auth state on mount
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('accessToken');
+      // Initialize storage (loads native storage to localStorage on Android)
+      await Storage.initializeStorage();
+
+      const token = await Storage.getItem('accessToken');
       if (!token) {
         setIsLoading(false);
         return;
@@ -93,7 +100,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!userData) {
         const refreshed = await refreshAccessToken();
         if (refreshed) {
-          const newToken = localStorage.getItem('accessToken');
+          const newToken = await Storage.getItem('accessToken');
           if (newToken) {
             userData = await fetchUser(newToken);
           }
@@ -104,8 +111,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(userData);
       } else {
         // Clear invalid tokens
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        await Storage.removeItem('accessToken');
+        await Storage.removeItem('refreshToken');
       }
 
       setIsLoading(false);
@@ -127,10 +134,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Listen for auth:logout events (e.g., from API 401 responses)
   useEffect(() => {
-    const handleLogout = () => {
+    const handleLogout = async () => {
       setUser(null);
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      await Storage.removeItem('accessToken');
+      await Storage.removeItem('refreshToken');
     };
 
     window.addEventListener('auth:logout', handleLogout);
@@ -150,8 +157,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     const result = await response.json();
-    localStorage.setItem('accessToken', result.tokens.accessToken);
-    localStorage.setItem('refreshToken', result.tokens.refreshToken);
+    await Storage.setItem('accessToken', result.tokens.accessToken);
+    await Storage.setItem('refreshToken', result.tokens.refreshToken);
     setUser(result.user);
   }, []);
 
@@ -168,14 +175,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     const result = await response.json();
-    localStorage.setItem('accessToken', result.tokens.accessToken);
-    localStorage.setItem('refreshToken', result.tokens.refreshToken);
+    await Storage.setItem('accessToken', result.tokens.accessToken);
+    await Storage.setItem('refreshToken', result.tokens.refreshToken);
     setUser(result.user);
   }, []);
 
   const logout = useCallback(async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    const accessToken = localStorage.getItem('accessToken');
+    const refreshToken = await Storage.getItem('refreshToken');
+    const accessToken = await Storage.getItem('accessToken');
 
     try {
       await fetch(`${API_URL}/api/auth/logout`, {
@@ -189,16 +196,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      await Storage.removeItem('accessToken');
+      await Storage.removeItem('refreshToken');
       setUser(null);
-      // Force a page refresh to clear all cached data
-      window.location.href = '/login';
+      // Use React Router instead of window.location for proper SPA navigation
+      navigate('/login', { replace: true });
     }
-  }, []);
+  }, [navigate]);
 
   const refreshUser = useCallback(async () => {
-    const token = localStorage.getItem('accessToken');
+    const token = await Storage.getItem('accessToken');
     if (!token) return;
 
     const userData = await fetchUser(token);
@@ -208,7 +215,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [fetchUser]);
 
   const getAccessToken = useCallback(() => {
-    return localStorage.getItem('accessToken');
+    // Use sync version for immediate access (needed for API calls)
+    return Storage.getItemSync('accessToken');
   }, []);
 
   return (

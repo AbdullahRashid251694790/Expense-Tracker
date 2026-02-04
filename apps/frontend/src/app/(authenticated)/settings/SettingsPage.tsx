@@ -1,9 +1,11 @@
 /**
  * Settings Page
  * User profile and app settings with full functionality
+ * Updated for Android/Capacitor compatibility
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, Bell, Palette, Shield, LogOut, Check, Database } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -11,7 +13,8 @@ import { useTheme } from '@/lib/context/ThemeContext';
 import { useCurrency, type CurrencyCode } from '@/lib/context/CurrencyContext';
 import { getApiUrl, ApiError } from '@/lib/api/client';
 import { authRepository } from '@/lib/api/repositories';
-import { BentoCard, Button, Avatar, Select } from '@/components/atoms';
+import { Storage } from '@/lib/storage/storage';
+import { BentoCard, Button, Avatar, Select, ConfirmDialog } from '@/components/atoms';
 import { FormField } from '@/components/molecules';
 import { cn } from '@/lib/utils/cn';
 
@@ -33,6 +36,7 @@ const STORAGE_KEYS = {
 const API_URL = getApiUrl();
 
 export function SettingsPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const { user, logout, refreshUser, getAccessToken } = useAuth();
   const { theme, setTheme, effectiveTheme } = useTheme();
@@ -57,6 +61,10 @@ export function SettingsPage() {
   // Photo upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  // Confirm dialog states
+  const [deleteConfirmStep, setDeleteConfirmStep] = useState(0); // 0 = closed, 1 = first confirm, 2 = final confirm
+  const [showSeedConfirm, setShowSeedConfirm] = useState(false);
 
   // Update profile name when user changes
   useEffect(() => {
@@ -250,22 +258,25 @@ export function SettingsPage() {
     }
   };
 
-  // Handle account deletion
-  const handleDeleteAccount = async () => {
-    // Show confirmation before deletion
-    if (!window.confirm('Are you sure you want to delete your account? This action cannot be undone. All your data will be permanently deleted.')) {
+  // Handle account deletion - step 1
+  const handleDeleteAccountClick = () => {
+    setDeleteConfirmStep(1);
+  };
+
+  // Handle account deletion - confirmed
+  const handleDeleteAccountConfirm = async () => {
+    if (deleteConfirmStep === 1) {
+      // Move to final confirmation
+      setDeleteConfirmStep(2);
       return;
     }
 
-    // Double confirmation for safety
-    if (!window.confirm('This is your final warning. Are you absolutely sure? There is no way to recover your account after deletion.')) {
-      return;
-    }
-
+    // Final deletion
     try {
       setIsDeleting(true);
       await authRepository.deleteAccount();
       toast.success('Account deleted successfully');
+      setDeleteConfirmStep(0);
       // Logout will redirect to login page
       await logout();
     } catch (error) {
@@ -275,14 +286,15 @@ export function SettingsPage() {
   };
 
   // Handle seed mock data
-  const handleSeedData = async () => {
-    if (!window.confirm('This will add demo data to your account (expenses, budgets, income). Continue?')) {
-      return;
-    }
+  const handleSeedDataClick = () => {
+    setShowSeedConfirm(true);
+  };
 
+  const handleSeedDataConfirm = async () => {
     const token = getAccessToken();
     if (!token) {
       toast.error('Not authenticated');
+      setShowSeedConfirm(false);
       return;
     }
 
@@ -304,9 +316,10 @@ export function SettingsPage() {
 
       const result = await response.json();
       toast.success(`Demo data created! Added ${result.data.expenses} expenses.`);
+      setShowSeedConfirm(false);
 
-      // Reload the page to show new data
-      window.location.reload();
+      // Navigate to dashboard to see new data (instead of window.location.reload)
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to create demo data');
     } finally {
@@ -557,7 +570,7 @@ export function SettingsPage() {
                   <Button
                     variant="secondary"
                     leftIcon={<Database className="h-4 w-4" />}
-                    onClick={handleSeedData}
+                    onClick={handleSeedDataClick}
                     isLoading={isSeeding}
                   >
                     Load Demo Data
@@ -573,7 +586,7 @@ export function SettingsPage() {
                   </p>
                   <Button
                     variant="danger"
-                    onClick={handleDeleteAccount}
+                    onClick={handleDeleteAccountClick}
                     isLoading={isDeleting}
                     disabled={isDeleting}
                   >
@@ -585,6 +598,42 @@ export function SettingsPage() {
           )}
         </div>
       </div>
+
+      {/* Confirm Dialogs */}
+      <ConfirmDialog
+        isOpen={deleteConfirmStep === 1}
+        onClose={() => setDeleteConfirmStep(0)}
+        onConfirm={handleDeleteAccountConfirm}
+        title="Delete Account?"
+        message="Are you sure you want to delete your account? This action cannot be undone. All your data will be permanently deleted."
+        confirmLabel="Continue"
+        cancelLabel="Cancel"
+        variant="danger"
+      />
+
+      <ConfirmDialog
+        isOpen={deleteConfirmStep === 2}
+        onClose={() => setDeleteConfirmStep(0)}
+        onConfirm={handleDeleteAccountConfirm}
+        title="Final Warning"
+        message="This is your final warning. Are you absolutely sure? There is no way to recover your account after deletion."
+        confirmLabel="Delete Forever"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
+
+      <ConfirmDialog
+        isOpen={showSeedConfirm}
+        onClose={() => setShowSeedConfirm(false)}
+        onConfirm={handleSeedDataConfirm}
+        title="Load Demo Data?"
+        message="This will add demo data to your account (expenses, budgets, income). Continue?"
+        confirmLabel="Load Data"
+        cancelLabel="Cancel"
+        variant="warning"
+        isLoading={isSeeding}
+      />
     </div>
   );
 }
@@ -601,20 +650,29 @@ function NotificationToggle({
   storageKey: string;
   defaultChecked?: boolean;
 }) {
-  const [checked, setChecked] = useState(() => {
-    const stored = localStorage.getItem(storageKey);
-    if (stored !== null) {
-      return stored === 'true';
-    }
-    return defaultChecked ?? false;
-  });
+  const [checked, setChecked] = useState(defaultChecked ?? false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  const handleToggle = () => {
+  // Load initial value from storage
+  useEffect(() => {
+    const loadValue = async () => {
+      const stored = Storage.getItemSync(storageKey);
+      if (stored !== null) {
+        setChecked(stored === 'true');
+      }
+      setIsLoaded(true);
+    };
+    loadValue();
+  }, [storageKey]);
+
+  const handleToggle = useCallback(() => {
     const newValue = !checked;
     setChecked(newValue);
-    localStorage.setItem(storageKey, String(newValue));
+    Storage.setItemSync(storageKey, String(newValue));
     toast.success(`${title} ${newValue ? 'enabled' : 'disabled'}`);
-  };
+  }, [checked, storageKey, title]);
+
+  if (!isLoaded) return null;
 
   return (
     <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
