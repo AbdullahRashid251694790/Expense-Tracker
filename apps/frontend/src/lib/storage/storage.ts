@@ -22,12 +22,15 @@ export async function getItem(key: string): Promise<string | null> {
 
 /**
  * Set a value in storage
+ * On native: writes to BOTH localStorage (for sync access) and Preferences (for persistence)
  */
 export async function setItem(key: string, value: string): Promise<void> {
+  // Always write to localStorage for immediate sync access
+  localStorage.setItem(key, value);
+
   if (isNative) {
+    // Also persist to native storage for app restart persistence
     await Preferences.set({ key, value });
-  } else {
-    localStorage.setItem(key, value);
   }
 }
 
@@ -35,10 +38,11 @@ export async function setItem(key: string, value: string): Promise<void> {
  * Remove a value from storage
  */
 export async function removeItem(key: string): Promise<void> {
+  // Always remove from localStorage
+  localStorage.removeItem(key);
+
   if (isNative) {
     await Preferences.remove({ key });
-  } else {
-    localStorage.removeItem(key);
   }
 }
 
@@ -46,10 +50,10 @@ export async function removeItem(key: string): Promise<void> {
  * Clear all storage
  */
 export async function clear(): Promise<void> {
+  localStorage.clear();
+
   if (isNative) {
     await Preferences.clear();
-  } else {
-    localStorage.clear();
   }
 }
 
