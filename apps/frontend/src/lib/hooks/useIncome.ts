@@ -70,13 +70,8 @@ export function useIncome(): UseIncomeReturn {
   const createIncomeSource = useCallback(async (data: CreateIncomeSourceRequest) => {
     setIsSubmitting(true);
     try {
-      console.log('[useIncome] Creating income source:', data);
       await incomeRepository.createIncomeSource(data);
-      console.log('[useIncome] Income source created successfully');
       await refetch();
-    } catch (error) {
-      console.error('[useIncome] Failed to create income source:', error);
-      throw error; // Re-throw so caller can handle it
     } finally {
       setIsSubmitting(false);
     }

@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   android: {
     captureInput: true,
     useLegacyBridge: false,
-    webContentsDebuggingEnabled: true, // Enable for debugging
+    webContentsDebuggingEnabled: false,
     backgroundColor: '#ffffff'
   },
   plugins: {
