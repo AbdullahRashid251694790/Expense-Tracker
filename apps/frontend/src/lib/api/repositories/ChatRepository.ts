@@ -5,6 +5,7 @@
 
 import { BaseRepository } from './BaseRepository';
 import { getApiUrl, ApiError } from '../client';
+import { Capacitor } from '@capacitor/core';
 import type { ChatConversation, ChatMessage } from '@casha/shared';
 
 // Cache TTLs
@@ -111,6 +112,7 @@ class ChatRepositoryClass extends BaseRepository {
   /**
    * Send message and stream response via SSE
    * Client sends conversation history, server streams AI response
+   * Falls back to non-streaming on mobile (Capacitor)
    */
   async sendMessageStream(
     request: SendMessageRequest,
@@ -121,6 +123,11 @@ class ChatRepositoryClass extends BaseRepository {
     if (!token) {
       callbacks.onError?.('Not authenticated');
       return;
+    }
+
+    // Use non-streaming endpoint on mobile (SSE streaming doesn't work well on Android WebView)
+    if (Capacitor.isNativePlatform()) {
+      return this.sendMessageNonStreaming(request, callbacks, token);
     }
 
     const response = await fetch(`${getApiUrl()}/api/chat/stream`, {
@@ -185,6 +192,42 @@ class ChatRepositoryClass extends BaseRepository {
           currentEvent = '';
         }
       }
+    }
+  }
+
+  /**
+   * Non-streaming fallback for mobile apps
+   */
+  private async sendMessageNonStreaming(
+    request: SendMessageRequest,
+    callbacks: StreamCallbacks,
+    token: string
+  ): Promise<void> {
+    try {
+      const response = await fetch(`${getApiUrl()}/api/chat/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new ApiError('Session expired', 401, 'Please log in again');
+        }
+        throw new ApiError('Failed to send message', response.status);
+      }
+
+      const data = await response.json();
+      const fullResponse = data.response || '';
+
+      // Simulate streaming by sending the full response at once
+      callbacks.onMessage?.(fullResponse);
+      callbacks.onDone?.(fullResponse);
+    } catch (error) {
+      callbacks.onError?.(error instanceof Error ? error.message : 'Unknown error');
     }
   }
 }

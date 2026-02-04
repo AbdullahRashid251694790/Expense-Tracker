@@ -147,6 +147,46 @@ router.post(
   }
 );
 
+// POST /api/chat/send - Non-streaming endpoint for mobile apps
+router.post(
+  '/send',
+  validateBody(sendMessageSchema),
+  async (req: JwtAuthRequest, res, next) => {
+    try {
+      const { message, history, context } = req.body as {
+        message: string;
+        conversationId?: string;
+        history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+        context?: UserContext;
+      };
+
+      // Build messages for AI
+      const messagesForAI: ChatMessage[] = [
+        ...(history || []).map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+        { role: 'user' as const, content: message },
+      ];
+
+      // Get full AI response (non-streaming)
+      let fullResponse = '';
+      try {
+        for await (const chunk of chatService.streamChatCompletion(messagesForAI, context)) {
+          fullResponse += chunk;
+        }
+      } catch (aiError) {
+        console.error('AI error:', aiError);
+        fullResponse = "I'm sorry, I encountered an error processing your request. Please try again.";
+      }
+
+      res.json({ response: fullResponse });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 // POST /api/chat/stream - Send message and stream response
 // Client sends conversation history, server streams AI response
 router.post(
