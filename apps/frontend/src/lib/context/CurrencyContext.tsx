@@ -60,19 +60,19 @@ export function CurrencyProvider({ children }: CurrencyProviderProps) {
   const config = CURRENCY_CONFIGS[currency];
 
   // Format currency based on selected currency
-  // Always use 'en-US' locale for consistent formatting, no decimals, comma as thousands separator
+  // Always use 'en-US' locale for consistent formatting with 2 decimal places
   const formatCurrency = useCallback(
     (amount: number): string => {
       try {
         return new Intl.NumberFormat('en-US', {
           style: 'currency',
           currency: config.code,
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
         }).format(amount);
       } catch {
         // Fallback formatting
-        return `${config.symbol}${Math.round(amount).toLocaleString('en-US')}`;
+        return `${config.symbol}${amount.toFixed(2)}`;
       }
     },
     [config]
