@@ -197,6 +197,7 @@ class ChatRepositoryClass extends BaseRepository {
 
   /**
    * Non-streaming fallback for mobile apps
+   * Simulates typing effect for better UX
    */
   private async sendMessageNonStreaming(
     request: SendMessageRequest,
@@ -223,9 +224,43 @@ class ChatRepositoryClass extends BaseRepository {
       const data = await response.json();
       const fullResponse = data.response || '';
 
-      // Simulate streaming by sending the full response at once
-      callbacks.onMessage?.(fullResponse);
-      callbacks.onDone?.(fullResponse);
+      // Simulate typing effect by revealing content gradually
+      // This provides a better UX on mobile where streaming isn't available
+      const chunkSize = 10; // Characters per chunk
+      const delay = 15; // Milliseconds between chunks
+
+      let currentIndex = 0;
+
+      const typeNextChunk = (): Promise<void> => {
+        return new Promise((resolve) => {
+          if (currentIndex >= fullResponse.length) {
+            // Done typing, call onDone with full response
+            callbacks.onDone?.(fullResponse);
+            resolve();
+            return;
+          }
+
+          // Get next chunk (respecting word boundaries when possible)
+          let endIndex = Math.min(currentIndex + chunkSize, fullResponse.length);
+
+          // Try to break at a space if we're not at the end
+          if (endIndex < fullResponse.length) {
+            const nextSpace = fullResponse.indexOf(' ', endIndex);
+            if (nextSpace !== -1 && nextSpace - endIndex < 10) {
+              endIndex = nextSpace + 1;
+            }
+          }
+
+          currentIndex = endIndex;
+          callbacks.onMessage?.(fullResponse.substring(0, currentIndex));
+
+          setTimeout(() => {
+            typeNextChunk().then(resolve);
+          }, delay);
+        });
+      };
+
+      await typeNextChunk();
     } catch (error) {
       callbacks.onError?.(error instanceof Error ? error.message : 'Unknown error');
     }
