@@ -68,6 +68,7 @@ export function BudgetsPage() {
     totalMonthlyIncome,
     isLoading: incomeLoading,
     deleteIncomeSource,
+    refetch: refetchIncome,
   } = useIncome();
 
   // Get categories that don't have budgets yet
@@ -755,6 +756,7 @@ export function BudgetsPage() {
         isOpen={incomeModalOpen}
         onClose={handleCloseIncomeModal}
         editSource={editIncomeSource}
+        onSuccess={refetchIncome}
       />
 
       {/* Delete Income Source Confirmation Modal */}
