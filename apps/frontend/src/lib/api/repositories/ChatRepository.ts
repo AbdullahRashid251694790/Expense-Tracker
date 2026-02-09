@@ -226,6 +226,7 @@ class ChatRepositoryClass extends BaseRepository {
 
       // Simulate typing effect by revealing content gradually
       // This provides a better UX on mobile where streaming isn't available
+      // Note: We send chunks (deltas) not cumulative text, since useChat appends them
       const chunkSize = 10; // Characters per chunk
       const delay = 15; // Milliseconds between chunks
 
@@ -251,8 +252,10 @@ class ChatRepositoryClass extends BaseRepository {
             }
           }
 
+          // Send just the new chunk (delta), not cumulative text
+          const chunk = fullResponse.substring(currentIndex, endIndex);
           currentIndex = endIndex;
-          callbacks.onMessage?.(fullResponse.substring(0, currentIndex));
+          callbacks.onMessage?.(chunk);
 
           setTimeout(() => {
             typeNextChunk().then(resolve);

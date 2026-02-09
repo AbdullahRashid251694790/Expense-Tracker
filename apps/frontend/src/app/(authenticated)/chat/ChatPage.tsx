@@ -27,7 +27,6 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Button, Input, Spinner } from '@/components/atoms';
 import { useChat } from '@/lib/hooks';
 import { useNetwork } from '@/lib/context/NetworkContext';
-import { useKeyboard } from '@/lib/hooks/useKeyboard';
 import { cn } from '@/lib/utils/cn';
 import type { ChatMessage, ChatConversation } from '@casha/shared';
 
@@ -60,7 +59,7 @@ export function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { keyboardHeight, isKeyboardVisible } = useKeyboard();
+  // Keyboard resize is handled by Capacitor with resize: 'body'
 
   // Auto-scroll to bottom only when streaming or user sends a message
   useEffect(() => {
@@ -301,14 +300,9 @@ export function ChatPage() {
           )}
         </div>
 
-        {/* Input Area - Fixed above keyboard when visible, otherwise above navbar */}
+        {/* Input Area - Fixed above navbar, keyboard resize handled by Capacitor */}
         <div
-          className={cn(
-            "fixed left-0 right-0 z-30 border-t border-border p-4 bg-surface lg:relative lg:bottom-0 lg:z-auto transition-all duration-200",
-            !isKeyboardVisible && "bottom-[calc(5rem+env(safe-area-inset-bottom))]",
-            isKeyboardVisible && "bottom-0"
-          )}
-          style={isKeyboardVisible && keyboardHeight > 0 ? { bottom: `${keyboardHeight}px` } : undefined}
+          className="fixed left-0 right-0 z-30 border-t border-border p-4 bg-surface lg:relative lg:bottom-0 lg:z-auto bottom-[calc(5rem+env(safe-area-inset-bottom))]"
         >
           <div className="pr-2">
             <div className="flex gap-2">

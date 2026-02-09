@@ -13,7 +13,8 @@ const config: CapacitorConfig = {
   plugins: {
     App: {},
     Keyboard: {
-      resize: 'none',
+      resize: 'body',
+      resizeOnFullScreen: true,
     }
   }
 };
