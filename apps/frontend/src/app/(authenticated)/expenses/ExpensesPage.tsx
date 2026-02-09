@@ -339,7 +339,7 @@ export function ExpensesPage() {
             {hasActiveFilters ? 'Filtered Total:' : 'Page Total:'}
           </span>
           <span className="text-xl font-bold text-text-primary">
-            -{formatCurrency(displayedTotal)}
+            {displayedTotal > 0 ? `-${formatCurrency(displayedTotal)}` : formatCurrency(0)}
           </span>
         </BentoCard>
       </div>
