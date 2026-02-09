@@ -19,6 +19,7 @@ import {
   Plus,
   Trash2,
   Briefcase,
+  AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getApiUrl } from '@/lib/api/client';
@@ -412,6 +413,24 @@ export function OnboardingPage() {
               )}
             />
           </div>
+          {/* Warning if budget exceeds income */}
+          {(() => {
+            const watchedAmount = parseFloat(budgetForm.watch('amount')) || 0;
+            const watchedPeriod = budgetForm.watch('period');
+            const monthlyBudget = watchedPeriod === 'weekly' ? watchedAmount * 4 : watchedAmount;
+            const exceedsIncome = monthlyBudget > 0 && totalMonthlyIncome > 0 && monthlyBudget > totalMonthlyIncome;
+            return exceedsIncome ? (
+              <div className="flex items-start gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-warning">Budget exceeds income</p>
+                  <p className="text-xs text-text-secondary mt-0.5">
+                    Your budget ({formatCurrency(watchedAmount)}) exceeds your monthly income ({formatCurrency(totalMonthlyIncome)}).
+                  </p>
+                </div>
+              </div>
+            ) : null;
+          })()}
           <Button
             type="submit"
             isLoading={budgetForm.formState.isSubmitting}

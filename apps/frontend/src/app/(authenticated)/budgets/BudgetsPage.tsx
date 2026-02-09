@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Edit2, Trash2, Tag, Wallet, CreditCard } from 'lucide-react';
+import { Plus, Edit2, Trash2, Tag, Wallet, CreditCard, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { BentoCard, Button, BudgetProgress, Badge, Modal, ModalFooter, Select, Skeleton } from '@/components/atoms';
@@ -83,6 +83,7 @@ export function BudgetsPage() {
     control,
     reset,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<BudgetFormData>({
     resolver: zodResolver(budgetSchema),
@@ -92,6 +93,13 @@ export function BudgetsPage() {
       period: 'monthly',
     },
   });
+
+  // Watch amount and period for budget vs income warning
+  const watchedAmount = watch('amount');
+  const watchedPeriod = watch('period');
+  const budgetAmount = parseFloat(watchedAmount) || 0;
+  const monthlyBudgetAmount = watchedPeriod === 'weekly' ? budgetAmount * 4 : budgetAmount;
+  const budgetExceedsIncome = monthlyBudgetAmount > 0 && totalMonthlyIncome > 0 && monthlyBudgetAmount > totalMonthlyIncome;
 
   // Open edit modal
   const handleEdit = (budget: BudgetWithProgress) => {
@@ -690,6 +698,19 @@ export function BudgetsPage() {
               )}
             />
           </div>
+
+          {/* Warning if budget exceeds income */}
+          {budgetExceedsIncome && (
+            <div className="flex items-start gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-warning">Budget exceeds income</p>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  Your {watchedPeriod} budget ({formatCurrency(budgetAmount)}) exceeds your monthly income ({formatCurrency(totalMonthlyIncome)}). Consider setting a budget within your income for better savings.
+                </p>
+              </div>
+            </div>
+          )}
 
           <ModalFooter>
             <Button type="button" variant="secondary" onClick={handleCloseModal}>
