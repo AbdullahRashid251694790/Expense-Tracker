@@ -16,10 +16,43 @@ import { ApiError } from '@/lib/api/client';
 import { BentoCard, Button } from '@/components/atoms';
 import { FormField } from '@/components/molecules';
 
+// Allowed email domains for registration
+const ALLOWED_EMAIL_DOMAINS = [
+  'gmail.com',
+  'googlemail.com',
+  'yahoo.com',
+  'yahoo.co.uk',
+  'yahoo.co.in',
+  'hotmail.com',
+  'outlook.com',
+  'live.com',
+  'msn.com',
+  'icloud.com',
+  'me.com',
+  'mac.com',
+  'aol.com',
+  'protonmail.com',
+  'proton.me',
+  'zoho.com',
+  'yandex.com',
+  'mail.com',
+  'gmx.com',
+  'gmx.net',
+];
+
 const registerSchema = z
   .object({
     name: z.string().min(2, 'Name must be at least 2 characters').optional(),
-    email: z.string().email('Invalid email address'),
+    email: z
+      .string()
+      .email('Invalid email address')
+      .refine(
+        (email) => {
+          const domain = email.split('@')[1]?.toLowerCase();
+          return domain && ALLOWED_EMAIL_DOMAINS.includes(domain);
+        },
+        { message: 'Please use a valid email provider (Gmail, Yahoo, Outlook, etc.)' }
+      ),
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters')
